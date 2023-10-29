@@ -1,26 +1,14 @@
 import allure
 import requests
-from API.api_methods import courier_login
-from helpers import generate_random_string
 
 
 class TestCourierDeletion:
     BASE_URL = 'https://qa-scooter.praktikum-services.ru/api/v1/courier'
 
     @allure.title('Проверка успешного удаления курьера')
-    def test_courier_successful_deletion(self):
+    def test_courier_successful_deletion(self, courier_create_and_login):
 
-        login = generate_random_string(10)
-        password = generate_random_string(10)
-
-        payload = {
-            'login': login,
-            'password': password
-        }
-        requests.post(f'{self.BASE_URL}', data=payload)
-        courier_id = courier_login(login, password)
-
-        response = requests.delete(f"{self.BASE_URL}/{courier_id}")
+        response = requests.delete(f"{self.BASE_URL}/{courier_create_and_login}")
 
         assert response.status_code == 200
         assert response.json()['ok'] is True

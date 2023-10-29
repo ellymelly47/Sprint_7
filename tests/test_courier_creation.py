@@ -1,7 +1,6 @@
 import allure
 import pytest
 import requests
-from API.api_methods import delete_courier
 from helpers import generate_random_string
 
 
@@ -12,6 +11,19 @@ class TestCourierCreation:
         self.login = generate_random_string(10)
         self.password = generate_random_string(10)
         self.first_name = generate_random_string(10)
+        self.is_courier_registered = False
+
+    def teardown(self):
+        if self.is_courier_registered:
+            payload = {
+                "login": self.login,
+                "password": self.password
+            }
+            response = requests.post(f"{self.BASE_URL}/login", data=payload)
+            courier_id = response.json()["id"]
+
+            if courier_id is not None:
+                requests.delete(f"{self.BASE_URL}/{courier_id}")
 
     @allure.title('Проверка успешного создания курьера со всеми обязательными полями в запросе')
     def test_courier_required_fields_in_request_success_create(self):
@@ -25,7 +37,7 @@ class TestCourierCreation:
         assert response.status_code == 201
         assert response.text == '{"ok":true}'
 
-        delete_courier(self.login, self.password)
+        self.is_courier_registered = True
 
     @allure.title('Проверка ошибки создания курьера: создание двух одинаковых курьеров')
     def test_courier_duplicate_courier_failed_create(self):
@@ -40,7 +52,7 @@ class TestCourierCreation:
         assert response.status_code == 409
         assert response.json()['message'] == 'Этот логин уже используется. Попробуйте другой.'
 
-        delete_courier(self.login, self.password)
+        self.is_courier_registered = True
 
     @allure.title('Проверка ошибки создания курьера: создание двух курьеров с одинаковым логином')
     def test_courier_duplicate_login_failed_create(self):
@@ -61,7 +73,7 @@ class TestCourierCreation:
         assert response.status_code == 409
         assert response.json()['message'] == 'Этот логин уже используется. Попробуйте другой.'
 
-        delete_courier(self.login, self.password)
+        self.is_courier_registered = True
 
     @allure.title('Проверка ошибки создания курьера: запросы без обязательных полей "login"/"password"')
     @pytest.mark.parametrize('payload', [
